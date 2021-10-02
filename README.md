@@ -31,6 +31,17 @@ https://www.kaggle.com/belalelwikel/asl-and-some-words
 https://www.kaggle.com/allexmendes/asl-alphabet-synthetic
 
 https://github.com/ruslan-kl/asl_recognition.
+
+Pretrained Models:
+
+RGB, 93.6% accuracy: 
+https://drive.google.com/file/d/1DQRqfSJ5crlpOtzTxPqEf4w570_05pHm/view?usp=sharing
+
+Grayscale, 87% accuracy: 
+https://drive.google.com/file/d/1zecVFTAOjZ4zCZarGU930hdcdyWLovus/view?usp=sharing
+
+Canny edge 85% validation accuracy: 
+https://drive.google.com/file/d/1x1HAVW69q0U7x7-kx1dFEa2Dubnysr0T/view?usp=sharing
  
 Data specification: 
 The initial training dataset was designed for supervised learning for image classification with labels and was composed of a combination of two sets found on Kaggle (Akash and Dan Rasband [reference]). The images were cropped to show primarily show gestures. This combined dataset consisted of 28 categories: one for each letter of the alphabet, A-Z, as well as a “space” character and a “nothing” label. Each category had 3,030 color images at 200x200 resolution. However, it was significantly lacking in diversity and was not generalizable. A second attempt to improve the database yielded 4626 images per training category, and 402 per validation category. Overall, the data available online seemed very non-generalizable with minor variation within but great variation between datasets. This led to very poor model convergence until we pooled a much more diverse dataset from various sources. Yet this still could pose significant challenges in how well the model will perform in highly varied settings. This new dataset nevertheless contained significantly more varied backgrounds than the previous.  
