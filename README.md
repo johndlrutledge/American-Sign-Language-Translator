@@ -2,6 +2,35 @@ Abstract:
 The objective of this project was to create an Android app that can be used as an American Sign Language translator, specifically for the letters of the alphabet. The app works by capturing an image of someone hand gesturing a letter, and then identifies and displays which sign is being shown. The purpose of creating the application was to allow utilization for educational purposes, or even as a potential way to communicate in the real world. Although the scope of the project only includes stationary gestures, and is limited to the letters of the alphabet, it has potential to be further developed into a much more enhanced version, including real-time readings with words and sentences.  
 The program was implemented by integrating a convolutional neural network to train a model using a wide range of datasets containing signs of the alphabet in different environments. Further enhancements were made with a substantial amount of retraining, validating, and incorporating data augmentation to strengthen the model and increase its accuracy. Finally, the model was made into a mobile app with the use of Android Studio and Tensorflow Lite, allowing the user to input an image and see the displayed results.  
  
+Getting started: 
+1) git clone https://github.com/smoothjazzuser/American-Sign-Language-Translator/
+2) Search kaggle for an appropriate ASL gesture dataset. See bellow for the ones we explored. Diverse datasets generalize far better than ones with all the same types of images. 
+3) Edit asl_basic_learner so that datapath and other variables in the beginning section refer to where your files are kept. There should be a path named "unsorted" that will be devided into training and validation data within the script. Optionally, you can enable canny edge detection here by uncommenting the function call within abstraact(). There should also be a folder in the base directory called "lite" that stores TFLite models.
+4) Run asl_basic_learner to train the model, and optionally tune hyperperameters. RGB images could benifit from experimenting with brighntess and contrast data augmentation layers in Keras. See https://www.tensorflow.org/tutorials/images/data_augmentation
+5) The resulting .tflite model requires inputs of size 200x200 and a depth of 3 (unless you choose color_mode = 'grayscale' images in asl_basic_learner). It outputs a tensor with 28 numbers between 0 and 1 representing the models confidence that it is each class. The order from left top to bottom right is A-Z are 0-25 and 'nothing' and 'space' are 26 and 27. 
+6) We have uploaded a pdf with the general code to add this model to an app. The follwoing are useful sites to further explore a more guided integration:
+
+https://github.com/android/camera-samples/tree/main/CameraXTfLite
+
+https://www.tensorflow.org/lite/guide
+
+https://developer.android.com/training/basics/firstapp
+
+https://developer.android.com/guide/components/fundamentals
+
+https://www.geeksforgeeks.org/android-how-to-open-camera-through-intent-and-display-captured-image/.
+
+Datasets:
+
+https://www.kaggle.com/ammarnassanalhajali/american-sign-language-letters
+
+https://www.kaggle.com/grassknoted/asl-alphabet
+
+https://www.kaggle.com/belalelwikel/asl-and-some-words
+
+https://www.kaggle.com/allexmendes/asl-alphabet-synthetic
+
+https://github.com/ruslan-kl/asl_recognition.
  
 Data specification: 
 The initial training dataset was designed for supervised learning for image classification with labels and was composed of a combination of two sets found on Kaggle (Akash and Dan Rasband [reference]). The images were cropped to show primarily show gestures. This combined dataset consisted of 28 categories: one for each letter of the alphabet, A-Z, as well as a “space” character and a “nothing” label. Each category had 3,030 color images at 200x200 resolution. However, it was significantly lacking in diversity and was not generalizable. A second attempt to improve the database yielded 4626 images per training category, and 402 per validation category. Overall, the data available online seemed very non-generalizable with minor variation within but great variation between datasets. This led to very poor model convergence until we pooled a much more diverse dataset from various sources. Yet this still could pose significant challenges in how well the model will perform in highly varied settings. This new dataset nevertheless contained significantly more varied backgrounds than the previous.  
