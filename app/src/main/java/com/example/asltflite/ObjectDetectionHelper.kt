@@ -17,7 +17,6 @@
 
 package com.example.asltflite
 
-import android.graphics.RectF
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.image.TensorImage
 import org.tensorflow.lite.support.label.TensorLabel
