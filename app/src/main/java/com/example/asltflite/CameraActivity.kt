@@ -43,15 +43,20 @@ import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.nnapi.NnApiDelegate
 import org.tensorflow.lite.support.common.FileUtil
+import org.tensorflow.lite.support.common.TensorProcessor
 import org.tensorflow.lite.support.common.ops.NormalizeOp
 import org.tensorflow.lite.support.image.ImageProcessor
 import org.tensorflow.lite.support.image.TensorImage
 import org.tensorflow.lite.support.image.ops.ResizeOp
 import org.tensorflow.lite.support.image.ops.ResizeWithCropOrPadOp
 import org.tensorflow.lite.support.image.ops.Rot90Op
+import org.tensorflow.lite.support.label.TensorLabel
+import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import java.util.concurrent.Executors
-import kotlin.math.min
+
 import kotlin.random.Random
+
+
 
 /** Activity that displays the camera and performs object detection on the incoming frames */
 class CameraActivity : AppCompatActivity() {
@@ -102,6 +107,7 @@ class CameraActivity : AppCompatActivity() {
             FileUtil.loadLabels(this, LABELS_PATH)
         )
     }
+
 
     private val tfInputSize by lazy {
         val inputIndex = 0
@@ -194,15 +200,32 @@ class CameraActivity : AppCompatActivity() {
 
                 // Process the image in Tensorflow
                 val tfImage =  tfImageProcessor.process(tfImageBuffer.apply { load(bitmapBuffer) })
+                val labelMap = FileUtil.loadLabels(this, LABELS_PATH)
 
+
+                val probabilityTensorIndex = 0
+                val probabilityShape: IntArray = tflite!!.getOutputTensor(probabilityTensorIndex).shape() // {1, NUM_CLASSES}
+                val probabilityDataType: DataType = tflite!!.getOutputTensor(probabilityTensorIndex).dataType()
+                var outputProbabilityBuffer = TensorBuffer.createFixedSize(probabilityShape, probabilityDataType)
+                var probabilityProcessor = TensorProcessor.Builder().build()
+                tflite?.run(tfImage?.buffer, outputProbabilityBuffer?.buffer?.rewind())
+                val labeledProbability: Map<String, Float> =
+                    labelMap?.let {
+                        probabilityProcessor?.let { it1 -> TensorLabel(it, it1.process(outputProbabilityBuffer))
+                            .mapWithFloatValue
+                        }
+                    } as Map<String, Float>
+
+                reportPrediction(labeledProbability.maxByOrNull { it.value })
+/**
                 // Perform the object detection for the current frame
                 val predictions = detector.predict2(tfImage)
-                val labelMap = FileUtil.loadLabels(this, LABELS_PATH)
+
                 val maxIndex = predictions.indexOf(predictions.maxByOrNull { it.score })
                 val maxLabel = labelMap[maxIndex]
                 // Report only the top prediction
                 reportPrediction(predictions.maxByOrNull { it.score }, maxLabel)
-
+*/
                 // Compute the FPS of the entire pipeline
                 val frameCount = 10
                 if (++frameCounter % frameCount == 0) {
@@ -210,7 +233,7 @@ class CameraActivity : AppCompatActivity() {
                     val now = System.currentTimeMillis()
                     val delta = now - lastFpsTimestamp
                     val fps = 1000 * frameCount.toFloat() / delta
-                    Log.d(TAG, "FPS: ${"%.02f".format(fps)} with tensorSize: ${tfImage.width} x ${tfImage.height}, $predictions")
+                    Log.d(TAG, "FPS: ${"%.02f".format(fps)} with tensorSize: ${tfImage.width} x ${tfImage.height}, ${activityCameraBinding.viewFinder.height}, ${activityCameraBinding.viewFinder.width}")
                     lastFpsTimestamp = now
                 }
             })
@@ -229,28 +252,26 @@ class CameraActivity : AppCompatActivity() {
         }, ContextCompat.getMainExecutor(this))
     }
 
-    private fun reportPrediction(
-        prediction: ObjectDetectionHelper.ObjectPrediction2?,  label: String
-    ) = activityCameraBinding.viewFinder.post {
+      private fun reportPrediction(prediction: Map.Entry<String, Float>?)
+//    private fun reportPrediction(
+//        prediction: ObjectDetectionHelper.ObjectPrediction2?,  label: String    )
+        = activityCameraBinding.viewFinder.post {
 
         // Early exit: if prediction is not good enough, don't report it
-        if (prediction == null || prediction.score < ACCURACY_THRESHOLD) {
-            activityCameraBinding.boxPrediction.visibility = View.GONE
+        if (prediction?.value == null || prediction?.value < ACCURACY_THRESHOLD) {
+            //activityCameraBinding.boxPrediction.visibility = View.GONE
             activityCameraBinding.textPrediction.visibility = View.GONE
             return@post
         }
 
-        // Location has to be mapped to our local coordinates
-        //val location = mapOutputCoordinates(prediction.location)
+
 
         // Update the text and UI
-        activityCameraBinding.textPrediction.text = "${"%.2f".format(prediction.score)} ${label}"
+
+        activityCameraBinding.textPrediction.text = "${"%.2f".format(prediction.value)} ${prediction.key}"
         (activityCameraBinding.boxPrediction.layoutParams as ViewGroup.MarginLayoutParams).apply {
-         //   topMargin = location.top.toInt()
-         //   leftMargin = location.left.toInt()
-         //   width = min(activityCameraBinding.viewFinder.width, location.right.toInt() - location.left.toInt())
-          //  height = min(activityCameraBinding.viewFinder.height, location.bottom.toInt() - location.top.toInt())
-            topMargin = activityCameraBinding.viewFinder.height / 4
+
+            topMargin = activityCameraBinding.viewFinder.height / 3
             leftMargin = activityCameraBinding.viewFinder.width / 8
             width = activityCameraBinding.viewFinder.width / 4 * 3
             height = activityCameraBinding.viewFinder.height / 3
@@ -347,3 +368,6 @@ class CameraActivity : AppCompatActivity() {
         private const val LABELS_PATH = "labels.txt"
     }
 }
+
+
+

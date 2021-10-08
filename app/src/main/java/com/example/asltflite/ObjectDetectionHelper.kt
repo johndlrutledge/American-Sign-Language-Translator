@@ -20,6 +20,7 @@ package com.example.asltflite
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.image.TensorImage
 import org.tensorflow.lite.support.label.TensorLabel
+import kotlin.collections.*
 
 /**
  * Helper class used to communicate between our app and the TF object detection model
@@ -34,6 +35,7 @@ class ObjectDetectionHelper(private val tflite: Interpreter, private val labels:
     private val labelIndices = arrayOf(FloatArray(OBJECT_COUNT))
     private val scores = arrayOf(FloatArray(OBJECT_COUNT))
 
+
     // The original example included view box location data and an output buffer that was not
     // easily compatible with our .tflite model output
     /**
@@ -44,11 +46,13 @@ class ObjectDetectionHelper(private val tflite: Interpreter, private val labels:
         3 to FloatArray(1)
     ) */
 
-    val outputBuffer2 = mapOf(
+    private val outputBuffer2 = mapOf(
         0 to scores
     )
 
-    val predictions2 get() = (0 until OBJECT_COUNT - 1).map {
+
+    //TODO fix the mapping of labels to scores
+    private val predictions2 get() = (0 until OBJECT_COUNT).map {
             ObjectPrediction2(
                 label = labels[labelIndices[0][it].toInt()],
                 score = scores[0][it]
@@ -65,6 +69,8 @@ class ObjectDetectionHelper(private val tflite: Interpreter, private val labels:
     }
 
 }
+
+
 
 
 
